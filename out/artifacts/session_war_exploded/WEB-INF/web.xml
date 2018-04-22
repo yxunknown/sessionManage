@@ -10,6 +10,6 @@
 
     <servlet-mapping>
         <servlet-name>session</servlet-name>
-        <url-pattern>/session</url-pattern>
+        <url-pattern>/session/test</url-pattern>
     </servlet-mapping>
 </web-app>

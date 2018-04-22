@@ -27,7 +27,22 @@ public class Session {
         this.expire = 1800;
         this.live = 0;
         this.remain = expire - live;
-        attr = new HashMap<String, Object>();
+        attr = new HashMap<>();
+    }
+
+    public Session(String sessionId, long expire) {
+        //init session id
+        this.sessionId = sessionId;
+        //init create time & last access time
+        this.createTime = new Date(System.currentTimeMillis());
+        this.lastAccessTime = createTime;
+        //init expire time
+        //default time unit : s
+        this.expire = expire;
+        //init live time
+        this.live = 0;
+        this.remain = expire - live;
+        attr = new HashMap<>();
     }
 
     public void setAttribute(String key, Object value) {
@@ -37,11 +52,28 @@ public class Session {
         return this.attr.get(key);
     }
 
-    public void setAttribute(String key, Integer value) {
-        this.attr.put(key, value);
+    public void refresh() {
+        Date now = new Date(System.currentTimeMillis());
+        this.live = (now.getTime() - this.createTime.getTime()) / 1000;
+        this.remain = this.expire - this.live;
+        this.lastAccessTime = new Date(System.currentTimeMillis());
     }
-    public Integer getAttribute(String key) {
-        return (Integer) this.attr.get(key); 
+    public boolean validate() {
+        return this.remain > 0;
+    }
+    @Override
+    public String toString() {
+        return "{" +
+                "sessionId:" + sessionId + "," +
+                "createTime:" + createTime + "," +
+                "lastAccessTime:" + lastAccessTime + "," +
+                "expire:" + expire + "," +
+                "live:" + live + "," +
+                "remain:" + remain + "," +
+                "attr:" + attr + "}";
     }
 
+    public String getSessionId() {
+        return sessionId;
+    }
 }
