@@ -69,7 +69,7 @@ public class SessionHelper {
      * @param sessionId id of servlet
      * @return a HttpSession
      */
-    public synchronized Session getSession(@NotNull String sessionId) {
+    public Session getSession(@NotNull String sessionId) {
         return sessionMap.get(sessionId);
     }
 
@@ -88,7 +88,7 @@ public class SessionHelper {
      * @param sessionId id of servlet
      * @param session   a HttpSession instance
      */
-    public synchronized void add(@NotNull String sessionId,
+    public void add(@NotNull String sessionId,
                                  @NotNull Session session) {
         this.sessionMap.put(sessionId, session);
     }
@@ -102,7 +102,6 @@ public class SessionHelper {
             try {
                 while (true) {
                     update();
-                    sleep(100);
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -110,7 +109,7 @@ public class SessionHelper {
         });
     }
 
-    private void update() {
+    private void update() throws InterruptedException {
         System.out.println("session updated:" + sessionMap.size());
         synchronized (sessionMap) {
             System.out.println("enter change area:" + sessionMap.size());
@@ -120,6 +119,7 @@ public class SessionHelper {
                     sessionMap.remove(session.getSessionId());
                 }
             }
+            sessionMap.wait(1000);
         }
     }
 }
