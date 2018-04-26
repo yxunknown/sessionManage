@@ -4,10 +4,9 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.mevur.dev.session.Session;
 import com.sun.istack.internal.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 
 import static java.lang.Thread.sleep;
 
@@ -29,7 +28,7 @@ public class SessionHelper {
     private static SessionHelper helper;
 
     private SessionHelper() {
-        sessionMap = new HashMap<>();
+        sessionMap = new ConcurrentHashMap<>();
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setDaemon(true)
                 .setNameFormat("update-session-thread-%d")
@@ -37,7 +36,8 @@ public class SessionHelper {
         sessionUpdatePool = new ThreadPoolExecutor(1, 1, 2L,
                 TimeUnit.MILLISECONDS, new LinkedBlockingDeque<>(1024),
                 threadFactory, new ThreadPoolExecutor.AbortPolicy());
-        init();
+        //start session maintainer
+        sessionUpdatePool.execute(new SessionMaintainer(this, 5000));
     }
 
     /**
@@ -88,8 +88,8 @@ public class SessionHelper {
      * @param sessionId id of servlet
      * @param session   a HttpSession instance
      */
-    public void add(@NotNull String sessionId,
-                                 @NotNull Session session) {
+    public synchronized void add(@NotNull String sessionId,
+                    @NotNull Session session) {
         this.sessionMap.put(sessionId, session);
     }
 
@@ -97,29 +97,13 @@ public class SessionHelper {
         return sessionMap;
     }
 
-    private void init() {
-        sessionUpdatePool.execute(() -> {
-            try {
-                while (true) {
-                    update();
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+
+    public void refresh() {
+        sessionMap.forEach((k, v) -> {
+            v.refresh();
+            if (!v.validate()) {
+                sessionMap.remove(k);
             }
         });
-    }
-
-    private void update() throws InterruptedException {
-        System.out.println("session updated:" + sessionMap.size());
-        synchronized (sessionMap) {
-            System.out.println("enter change area:" + sessionMap.size());
-            for (Session session : sessionMap.values()) {
-                session.refresh();
-                if (!session.validate()) {
-                    sessionMap.remove(session.getSessionId());
-                }
-            }
-            sessionMap.wait(1000);
-        }
     }
 }
