@@ -11,6 +11,7 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Date;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,27 +24,25 @@ public class SessionServlet extends HttpServlet {
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         HttpSession session = req.getSession(true);
-        Date createTime = new Date(session.getCreationTime());
-        Date lastAccessTime = new Date(session.getLastAccessedTime());
-        Date now = new Date(System.currentTimeMillis());
-        long live = (now.getTime() - createTime.getTime()) / 1000;
-        int expire = session.getMaxInactiveInterval();
-        long remains = expire - live;
-
-        if (sessionHelper.containSession(session.getId())) {
-            sessionHelper.update(session.getId());
-            if (!sessionHelper.getSession(session.getId()).validate()) {
-                //创建新session
-                session.invalidate();
-                session = req.getSession(true);
-                sessionHelper.add(session.getId(), new Session(session.getId(), 20));
-            }
+        Session s = sessionHelper.getSession(session.getId());
+        if (null != s && s.validate()) {
+           //update session
+            s.refresh();
+        } else if (null != s && !s.validate()){
+           session.invalidate();
+           session = req.getSession(true);
         } else {
-            sessionHelper.add(session.getId(), new Session(session.getId(), 20));
+            s = new Session(session.getId());
+            sessionHelper.add(s.getSessionId(), s);
         }
-        logger.log(Level.INFO, sessionHelper.getSession(session.getId()).toString());
+        Set<String> keys = req.getParameterMap().keySet();
+        for (String key : keys) {
+            System.out.println(key + req.getParameterMap().get(key));
+        }
+
+        logger.log(Level.INFO, s.toString());
         PrintWriter writer = resp.getWriter();
-        writer.write(sessionHelper.getSession(session.getId()).toString());
+        writer.write(s.toString());
         writer.flush();
         writer.close();
     }

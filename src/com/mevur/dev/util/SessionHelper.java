@@ -93,12 +93,8 @@ public class SessionHelper {
         this.sessionMap.put(sessionId, session);
     }
 
-    public Map<String, Session> getSessionMap() {
-        return sessionMap;
-    }
-
-
     public void refresh() {
+        System.out.println("session size: " + sessionMap.size());
         sessionMap.forEach((k, v) -> {
             v.refresh();
             if (!v.validate()) {

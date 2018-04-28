@@ -76,4 +76,8 @@ public class Session {
     public String getSessionId() {
         return sessionId;
     }
+
+    public void setAttr(Map<String, Object> attr) {
+        this.attr = attr;
+    }
 }

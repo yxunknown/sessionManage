@@ -17,16 +17,17 @@ public class SessionMaintainer implements Runnable {
         this.sessionHelper = sessionHelper;
         this.duration = duration;
     }
+
     @Override
     public void run() {
         while (true) {
             synchronized (sessionHelper) {
-                try {
-                    sessionHelper.refresh();
-                    Thread.sleep(duration);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                sessionHelper.refresh();
+            }
+            try {
+                Thread.sleep(duration);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
